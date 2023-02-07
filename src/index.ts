@@ -250,7 +250,7 @@ DUCKCLOUD_CLI_SCRIPT_EOF\n`);
 			const pagehtml = await resp.text();
 			const containers = qparse(pagehtml);
 			*/
-			const resp = await fetch("https://duckcloud.pcprojects.tk/listContainers", {
+			const resp = await fetch("https://duckcloud.pcprojects.tk/listContainer", {
 				headers: { Cookie: `token=${config.token}` }
 			});
 			const containers: Container[] = await resp.json();

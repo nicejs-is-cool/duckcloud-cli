@@ -8,7 +8,12 @@ import path from 'path';
 import io from 'socket.io-client';
 import Spinnies from 'spinnies';
 import readline from 'readline';
-import qparse from './quickparse.js';
+
+interface Container {
+	vmname: string;
+	vmname_encoded: string;
+	status: 'online' | 'offline';
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const configf = path.join(__dirname, "./config.json")
@@ -239,13 +244,18 @@ DUCKCLOUD_CLI_SCRIPT_EOF\n`);
 		.command('ls', 'List all containers', yargs => yargs, async argv => {
 			const config = await readConfig();
 			console.log('name\t\tstatus\tid');
-			const resp = await fetch("https://duckcloud.pcprojects.tk", {
+			/*const resp = await fetch("https://duckcloud.pcprojects.tk", {
 				headers: { Cookie: `token=${config.token}` }
 			});
 			const pagehtml = await resp.text();
 			const containers = qparse(pagehtml);
-			for (const container of containers) {
-				console.log(`${container.name}\t${container.online ? "online" : "offline"}\t${container.id}`);
+			*/
+			const resp = await fetch("https://duckcloud.pcprojects.tk/listContainers", {
+				headers: { Cookie: `token=${config.token}` }
+			});
+			const containers: Container[] = await resp.json();
+			for (const [_, container] of containers.entries()) {
+				console.log(`${container.vmname}\t${container.status}\t${_}`);
 			}
 		})
 	.demandCommand()

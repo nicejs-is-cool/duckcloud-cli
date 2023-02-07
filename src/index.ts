@@ -87,7 +87,7 @@ yargs(hideBin(process.argv))
 		let lastPressedCtrlC = false
 		socket.on('connect', () => {
 			if (!argv.noClear) {
-				socket.emit('datad', 'clear\r\n');
+				socket.emit('datad', 'clear\n');
 			}
 			// resize lol
 			socket.emit('resize', process.stdout.columns, process.stdout.rows);

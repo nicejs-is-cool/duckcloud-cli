@@ -4,6 +4,12 @@ export interface Container {
     id: number;
 }
 export const regex = /<div class="object" style="position: relative; top: 0px;"><b>(?<name>.+) <\/b><div class="(?<status>online|offline)-icon">dk<\/div><a href="\/settings\/(?<id>\d+)" class="arrow manage-vm">.<\/a><\/div>/;
+/**
+ * Parses html and returns a list of containers
+ * @param html HTML string
+ * @returns {Container[]} Container[]
+ * @deprecated Use /listContainers endpoint instead
+ */
 export default function qparse(html: string): Container[] {
     let lines = html.split('\n').slice(13, -3);
     let results: Container[] = [];

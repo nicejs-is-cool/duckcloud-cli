@@ -8,7 +8,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "GPL2.0",
+  "license": "GPL3.0",
   "type": "module",
   "devDependencies": {
     "@types/node": "^18.11.18",

@@ -75,6 +75,8 @@ yargs(hideBin(process.argv))
 		socket.emit('vmselect', config.selected)
 		let lastPressedCtrlC = false
 		socket.on('connect', () => {
+			// resize lol
+			socket.emit('resize', process.stdout.columns, process.stdout.rows);
 			process.stdin.setRawMode(true);
 			process.stdin.on('data', d => {
 				//console.log(d[0], lastPressedCtrlC)

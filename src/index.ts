@@ -65,7 +65,13 @@ yargs(hideBin(process.argv))
 		console.log('selected container', argv.id)
 		process.exit(0);
 	})
-	.command('sh', 'Open shell in selected container', yargs => yargs, async argv => {
+	.command('sh', 'Open shell in selected container', yargs => 
+		yargs.option('no-clear', {
+			alias: ['n'],
+			describe: 'Don\'t clear the terminal when opening sh',
+			type: 'boolean'
+		}),
+	async argv => {
 		const config = JSON.parse(await fs.readFile(configf, "utf-8"))
 		const socket = io("https://duckcloud.pcprojects.tk", {
 			transportOptions: {
@@ -80,8 +86,14 @@ yargs(hideBin(process.argv))
 		socket.emit('vmselect', config.selected)
 		let lastPressedCtrlC = false
 		socket.on('connect', () => {
+			if (!argv.noClear) {
+				socket.emit('datad', 'clear\r\n');
+			}
 			// resize lol
 			socket.emit('resize', process.stdout.columns, process.stdout.rows);
+			process.stdout.on('resize', () => {
+				socket.emit('resize', process.stdout.columns, process.stdout.rows);
+			})
 			process.stdin.setRawMode(true);
 			process.stdin.on('data', d => {
 				//console.log(d[0], lastPressedCtrlC)
@@ -95,7 +107,7 @@ yargs(hideBin(process.argv))
 					if (lastPressedCtrlC) lastPressedCtrlC = false;
 				}
 				
-				socket.emit('datad', d)
+				socket.emit('datad', d.toString('utf-8'))
 			});
 		})
 		socket.on('disconnect', () => {

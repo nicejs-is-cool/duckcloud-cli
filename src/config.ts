@@ -7,16 +7,52 @@ import JSON5 from 'json5';
 export interface Config {
     token: string;
     selected: number;
+    create: {
+        networkingEnabledByDefault: boolean,
+        proEnabledByDefault: boolean
+    },
+    rm: {
+        askForConfirmation: boolean
+    },
+    sh: {
+        clearTerminalOnConnection: boolean,
+        resizeTerminalOnConnection: boolean,
+        listenForTerminalResize: boolean,
+        datadEncoding: BufferEncoding,
+        stdinRawMode: boolean
+    },
+    ls: {
+        useLegacyQuickParse: boolean,
+    },
+    script: {
+        eof: string
+    }
 }
 
 export const config_path = path.join(os.homedir(), "./.duckcl.json5");
 
-export const defaultConfig = {
+export const defaultConfig: Config = {
     token: "",
     selected: 0,
     create: {
         networkingEnabledByDefault: false,
-
+        proEnabledByDefault: false
+    },
+    rm: {
+        askForConfirmation: true
+    },
+    sh: {
+        clearTerminalOnConnection: true,
+        resizeTerminalOnConnection: true,
+        listenForTerminalResize: true,
+        datadEncoding: 'utf-8',
+        stdinRawMode: true
+    },
+    ls: {
+        useLegacyQuickParse: false,
+    },
+    script: {
+        eof: "DUCKCLOUD_CLI_SCRIPT_EOF"
     }
 }
 

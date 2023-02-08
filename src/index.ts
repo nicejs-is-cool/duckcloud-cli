@@ -4,12 +4,9 @@ import { hideBin } from 'yargs/helpers'
 import { dirname } from 'path';
 import { fileURLToPath } from 'url'
 import fs from 'fs/promises';
-import path from 'path';
 import io from 'socket.io-client';
 import Spinnies from 'spinnies';
 import readline from 'readline';
-import os from 'os';
-import JSON5 from 'json5';
 import * as cfw from './config.js';
 
 interface Container {
@@ -154,9 +151,9 @@ yargs(hideBin(process.argv))
 			});
 			socket.on('datad', data => process.stdout.write(data));
 			socket.emit('vmselect', cfw.config.selected)
-			socket.emit('datad', `cat << DUCKCLOUD_CLI_SCRIPT_EOF | bash
+			socket.emit('datad', `cat << ${cfw.config.script.eof} | bash
 ${file}
-DUCKCLOUD_CLI_SCRIPT_EOF\n`);
+${cfw.config.script.eof}\n`);
 			process.stdin.setRawMode(true);
 			process.stdin.on('data', data => {
 				if (data[0] === "q".charCodeAt(0)) {

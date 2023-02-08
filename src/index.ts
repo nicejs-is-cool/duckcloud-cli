@@ -252,5 +252,39 @@ DUCKCLOUD_CLI_SCRIPT_EOF\n`);
 				console.log(`${container.vmname}\t${container.status}\t${_}`);
 			}
 		})
+		.command('config [path]', 'Modify/view configuration', yargs =>
+			yargs.positional('path', {
+				describe: 'Object path',
+				type: 'string'
+			}).option('set', {
+				alias: ['e'],
+				describe: 'Set key at object path to the value specified (combine with data type option)',
+			}).option('string', {
+				describe: 'String datatype',
+				type: 'string',
+				alias: ['s']
+			}).option('number', {
+				describe: 'Number datatype',
+				type: 'number',
+				alias: ['n']
+			}).option('boolean', {
+				describe: 'Boolean datatype',
+				type: 'number',
+				alias: ['b', 'bool']
+			})
+		, argv => {
+			if (!argv.path) {
+				console.log(cfw.cfgp);
+				return;
+			}
+			if (!argv.set) {
+				console.log(cfw.get(argv.path));
+				return;
+			}
+			if (argv.string) return cfw.set(argv.path, argv.string);
+			if (argv.number) return cfw.set(argv.path, argv.number);
+			if (argv.boolean) return cfw.set(argv.path, !!argv.boolean);
+			console.error('No data type specified');
+		})
 	.demandCommand()
 	.parse()

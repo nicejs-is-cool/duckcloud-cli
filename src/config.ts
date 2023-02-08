@@ -98,10 +98,11 @@ export function get<T>(fpath: string): T {
     }
     return lescrungo;
 }
-export function set(fpath: string, value: any): void {
+export async function set(fpath: string, value: any) {
     if (!fpath.includes('.')) {
-        //@ts-ignore
-        cfgp[fpath] = value;
+        (cfgp as any)[fpath] = value;
+        await fs.writeFile(config_path, JSON5.stringify(cfgp, null, 2))
+        return;
     }
     let lescrungo: any = cfgp;
     const split = fpath.split('.')
@@ -109,7 +110,9 @@ export function set(fpath: string, value: any): void {
         if (!lescrungo[part]) throw new Error('object path does not exist');
         lescrungo = lescrungo[part];
     }
+    
     lescrungo[split[split.length - 1]] = value;
+    await fs.writeFile(config_path, JSON5.stringify(cfgp, null, 2))
 }
 
 export function reset() {

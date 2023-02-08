@@ -25,7 +25,8 @@ export interface Config {
         useLegacyQuickParse: boolean,
     },
     script: {
-        eof: string
+        eof: string,
+        shell: string
     }
     powerctl: {
         experimental: {
@@ -57,7 +58,8 @@ export const defaultConfig: Config = {
         useLegacyQuickParse: false,
     },
     script: {
-        eof: "DUCKCLOUD_CLI_SCRIPT_EOF"
+        eof: "DUCKCLOUD_CLI_SCRIPT_EOF",
+        shell: "bash"
     },
     powerctl: {
         experimental: {

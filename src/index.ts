@@ -65,15 +65,17 @@ yargs(hideBin(process.argv))
 		socket.emit('vmselect', cfw.config.selected)
 		let lastPressedCtrlC = false
 		socket.on('connect', () => {
-			if (!argv.noClear) {
+			if (!argv.noClear && cfw.config.sh.clearTerminalOnConnection) {
 				socket.emit('datad', 'clear\n');
 			}
 			// resize lol
-			socket.emit('resize', process.stdout.columns, process.stdout.rows);
-			process.stdout.on('resize', () => {
+			if (cfw.config.sh.resizeTerminalOnConnection)
 				socket.emit('resize', process.stdout.columns, process.stdout.rows);
-			})
-			process.stdin.setRawMode(true);
+			if (cfw.config.sh.listenForTerminalResize)
+				process.stdout.on('resize', () => {
+					socket.emit('resize', process.stdout.columns, process.stdout.rows);
+				});
+			process.stdin.setRawMode(cfw.config.sh.stdinRawMode);
 			process.stdin.on('data', d => {
 				//console.log(d[0], lastPressedCtrlC)
 				if (d[0] === 3) {
@@ -86,7 +88,7 @@ yargs(hideBin(process.argv))
 					if (lastPressedCtrlC) lastPressedCtrlC = false;
 				}
 				
-				socket.emit('datad', d.toString('utf-8'))
+				socket.emit('datad', d.toString(cfw.config.sh.datadEncoding))
 			});
 		})
 		socket.on('disconnect', () => {
@@ -175,14 +177,20 @@ ${cfw.config.script.eof}\n`);
 		, async argv => {
 			const rl = readline.createInterface(process.stdin, process.stdout);
 			//const config = await readConfig();
-			rl.question('Are you sure you want to delete this container? (y/n) ', async answer => {
-				if (!answer.startsWith('y')) return process.exit(0);
-				//const config = await readConfig()
-				await fetch(`https://duckcloud.pcprojects.tk/burn/${cfw.config.selected}`, {
+			function del() {
+				return fetch(`https://duckcloud.pcprojects.tk/burn/${cfw.config.selected}`, {
 					headers: { Cookie: `token=${cfw.config.token}` }
 				});
-				process.exit(0)
-			})
+			}
+			if (!argv.yes || cfw.config.rm.askForConfirmation) {
+				return rl.question('Are you sure you want to delete this container? (y/n) ', async answer => {
+					if (!answer.startsWith('y')) return process.exit(0);
+					//const config = await readConfig()
+					await del();
+					process.exit(0)
+				})
+			}
+			await del();
 		})
 		.command('create', 'Create a new container', yargs => {
 			return yargs
@@ -216,8 +224,8 @@ ${cfw.config.script.eof}\n`);
 			//const config = await readConfig()
 			const settings = {
 				name: argv.name || jsonfile.name,
-				network: argv.network || jsonfile.network || false,
-				pro: argv.pro || jsonfile.pro || false
+				network: argv.network || jsonfile.network || cfw.config.create.networkingEnabledByDefault || false,
+				pro: argv.pro || jsonfile.pro || cfw.config.create.proEnabledByDefault || false
 			}
 			if (!settings.name) return console.error('Missing container name');
 			const body = new URLSearchParams();
@@ -235,12 +243,18 @@ ${cfw.config.script.eof}\n`);
 		.command('ls', 'List all containers', yargs => yargs, async argv => {
 			//const config = await readConfig();
 			console.log('name\t\tstatus\tid');
-			/*const resp = await fetch("https://duckcloud.pcprojects.tk", {
-				headers: { Cookie: `token=${config.token}` }
-			});
-			const pagehtml = await resp.text();
-			const containers = qparse(pagehtml);
-			*/
+			if (cfw.config.ls.useLegacyQuickParse) {
+				const qparse = (await import("./quickparse.js")).default;
+				const resp = await fetch("https://duckcloud.pcprojects.tk", {
+					headers: { Cookie: `token=${cfw.config.token}` }
+				});
+				const pagehtml = await resp.text();
+				const containers = qparse(pagehtml);
+				for (const container of containers) {
+					console.log(`${container.name}\t${container.online ? 'online': 'offline'}\t${container.id}`);
+				}
+				return;
+			}
 			const resp = await fetch("https://duckcloud.pcprojects.tk/listContainer", {
 				headers: { Cookie: `token=${cfw.config.token}` }
 			});

@@ -8,28 +8,10 @@ import path from 'path';
 import io from 'socket.io-client';
 import Spinnies from 'spinnies';
 import readline from 'readline';
-import os from 'os'
+import os from 'os';
 import JSON5 from 'json5';
-const cfgdirPath = path.join(os.homedir(), "./.duckcl");
+import * as cfw from './config.js';
 
-try {
-	await fs.access(cfgdirPath, fs.constants.R_OK | fs.constants.W_OK)
-} catch(err) {
-	console.warn(`duckcl: warn: failed to access ${cfgdirPath}, creating a new folder...`);
-	await fs.mkdir(cfgdirPath);
-	await fs.writeFile(path.join(cfgdirPath, "./default.json5"), JSON5.stringify({
-		token: null,
-		selected: 0,
-		rm: {
-			askForConfirmation: true
-		}
-	}))
-}
-
-process.env["NODE_CONFIG_DIR"] = path.join(os.homedir(), "./.duckcl");
-let config: typeof import("config");
-
-config = await import("config")
 interface Container {
 	vmname: string;
 	vmname_encoded: string;
@@ -37,28 +19,6 @@ interface Container {
 }
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const configf = path.join(__dirname, "./config.json")
-
-interface Config {
-	token: null | string;
-	selected: number;
-}
-
-try {
-	await fs.access(configf, fs.constants.F_OK)
-} catch {
-	await fs.writeFile(configf, JSON.stringify({
-		token: null,
-		selected: 0
-	}, null, 2))
-}
-
-async function readConfig(): Promise<Config> {
-	return JSON.parse(await fs.readFile(configf, "utf-8"));
-}
-function writeConfig(config: Config): Promise<void> {
-	return fs.writeFile(configf, JSON.stringify(config, null, 2));
-}
 
 yargs(hideBin(process.argv))
 	.scriptName('duckcl')
@@ -68,9 +28,10 @@ yargs(hideBin(process.argv))
 			type: 'string'
 		})
 	}, async argv => {
-		const config = JSON.parse(await fs.readFile(path.join(__dirname, "./config.json"), 'utf-8'));
-		config.token = argv.token;
-		await fs.writeFile(configf, JSON.stringify(config, null, 2));
+		//const config = JSON.parse(await fs.readFile(path.join(__dirname, "./config.json"), 'utf-8'));
+		//config.token = argv.token;
+		//await fs.writeFile(configf, JSON.stringify(config, null, 2));
+		
 		process.exit(0);
 	})
 	.command('container <id>', 'Select a container', yargs => {
@@ -80,9 +41,9 @@ yargs(hideBin(process.argv))
 		})
 	}, async argv => {
 		if (isNaN(parseInt(argv.id || 'l'))) throw new Error('No id supplied');
-		const config = JSON.parse(await fs.readFile(configf, 'utf-8'));
-		config.selected = parseInt(argv.id || 'l');
-		await fs.writeFile(path.join(__dirname, "./config.json"), JSON.stringify(config, null, 2))
+		//const config = JSON.parse(await fs.readFile(configf, 'utf-8'));
+		cfw.config.selected = parseInt(argv.id || 'l');
+		//await fs.writeFile(path.join(__dirname, "./config.json"), JSON.stringify(config, null, 2))
 		console.log('selected container', argv.id)
 		process.exit(0);
 	})
@@ -93,18 +54,18 @@ yargs(hideBin(process.argv))
 			type: 'boolean'
 		}),
 	async argv => {
-		const config = JSON.parse(await fs.readFile(configf, "utf-8"))
+		//const config = JSON.parse(await fs.readFile(configf, "utf-8"))
 		const socket = io("https://duckcloud.pcprojects.tk", {
 			transportOptions: {
 				polling: {
 					extraHeaders: {
-						Cookie: `token=${config.token}`
+						Cookie: `token=${cfw.config.token}`
 					}
 				}
 			}
 		});
 		socket.on('datad', data => process.stdout.write(data));
-		socket.emit('vmselect', config.selected)
+		socket.emit('vmselect', cfw.config.selected)
 		let lastPressedCtrlC = false
 		socket.on('connect', () => {
 			if (!argv.noClear) {
@@ -143,9 +104,9 @@ yargs(hideBin(process.argv))
 		})
 	}, async argv => {
 		const spinnies = new Spinnies();
-		const config = await readConfig();
+		//const config = await readConfig();
 		function mkreq() {
-			return fetch("https://duckcloud.pcprojects.tk/shutoff/"+config.selected, { headers: { Cookie: `token=${config.token}`}});
+			return fetch("https://duckcloud.pcprojects.tk/shutoff/"+cfw.config.selected, { headers: { Cookie: `token=${cfw.config.token}`}});
 		}
 		switch (argv.action) {
 			case "shutdown": {
@@ -178,7 +139,7 @@ yargs(hideBin(process.argv))
 			describe: 'Path of the script file',
 			type: 'string'
 		}), async argv => {
-			const config = await readConfig();
+			//const config = await readConfig();
 			if (!argv.path) {console.error('missing file path'); return};
 			const file = await fs.readFile(argv.path, 'utf-8');
 			console.log('duckcl: Press Q to quit.');
@@ -186,13 +147,13 @@ yargs(hideBin(process.argv))
 				transportOptions: {
 					polling: {
 						extraHeaders: {
-							Cookie: `token=${config.token}`
+							Cookie: `token=${cfw.config.token}`
 						}
 					}
 				}
 			});
 			socket.on('datad', data => process.stdout.write(data));
-			socket.emit('vmselect', config.selected)
+			socket.emit('vmselect', cfw.config.selected)
 			socket.emit('datad', `cat << DUCKCLOUD_CLI_SCRIPT_EOF | bash
 ${file}
 DUCKCLOUD_CLI_SCRIPT_EOF\n`);
@@ -216,12 +177,12 @@ DUCKCLOUD_CLI_SCRIPT_EOF\n`);
 			})
 		, async argv => {
 			const rl = readline.createInterface(process.stdin, process.stdout);
-			const config = await readConfig();
+			//const config = await readConfig();
 			rl.question('Are you sure you want to delete this container? (y/n) ', async answer => {
 				if (!answer.startsWith('y')) return process.exit(0);
-				const config = await readConfig()
-				await fetch(`https://duckcloud.pcprojects.tk/burn/${config.selected}`, {
-					headers: { Cookie: `token=${config.token}` }
+				//const config = await readConfig()
+				await fetch(`https://duckcloud.pcprojects.tk/burn/${cfw.config.selected}`, {
+					headers: { Cookie: `token=${cfw.config.token}` }
 				});
 				process.exit(0)
 			})
@@ -255,7 +216,7 @@ DUCKCLOUD_CLI_SCRIPT_EOF\n`);
 				} //later */
 		}, async argv => {
 			let jsonfile: any = argv.fromFile ? JSON.parse(await fs.readFile(argv.fromFile, "utf-8")) : {};
-			const config = await readConfig()
+			//const config = await readConfig()
 			const settings = {
 				name: argv.name || jsonfile.name,
 				network: argv.network || jsonfile.network || false,
@@ -268,14 +229,14 @@ DUCKCLOUD_CLI_SCRIPT_EOF\n`);
 			body.append('shouldUse512mbRAM', settings.pro);
 			await fetch('https://duckcloud.pcprojects.tk/newVM', {
 				method: 'POST',
-				headers: { Cookie: `token=${config.token}` },
+				headers: { Cookie: `token=${cfw.config.token}` },
 				body
 			});
 			console.log(`container "${settings.name}" created`);
 			process.exit(0);
 		})
 		.command('ls', 'List all containers', yargs => yargs, async argv => {
-			const config = await readConfig();
+			//const config = await readConfig();
 			console.log('name\t\tstatus\tid');
 			/*const resp = await fetch("https://duckcloud.pcprojects.tk", {
 				headers: { Cookie: `token=${config.token}` }
@@ -284,7 +245,7 @@ DUCKCLOUD_CLI_SCRIPT_EOF\n`);
 			const containers = qparse(pagehtml);
 			*/
 			const resp = await fetch("https://duckcloud.pcprojects.tk/listContainer", {
-				headers: { Cookie: `token=${config.token}` }
+				headers: { Cookie: `token=${cfw.config.token}` }
 			});
 			const containers: Container[] = await resp.json();
 			for (const [_, container] of containers.entries()) {

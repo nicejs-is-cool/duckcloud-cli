@@ -271,8 +271,16 @@ DUCKCLOUD_CLI_SCRIPT_EOF\n`);
 				describe: 'Boolean datatype',
 				type: 'number',
 				alias: ['b', 'bool']
+			}).option('reset', {
+				describe: 'Reset your entire configuration to the defaults (useful if upgrading to new version with more config entries)',
+				type: 'boolean',
+				alias: ['r']
 			})
-		, argv => {
+		, async argv => {
+			if (argv.reset) {
+				await cfw.reset();
+				return console.log('Configuration restored to defaults (-r/--reset)');
+			}
 			if (!argv.path) {
 				console.log(cfw.cfgp);
 				return;

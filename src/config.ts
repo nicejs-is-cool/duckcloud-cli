@@ -13,7 +13,11 @@ export const config_path = path.join(os.homedir(), "./.duckcl.json5");
 
 export const defaultConfig = {
     token: "",
-    selected: 0
+    selected: 0,
+    create: {
+        networkingEnabledByDefault: false,
+
+    }
 }
 
 try {
@@ -70,4 +74,8 @@ export function set(fpath: string, value: any): void {
         lescrungo = lescrungo[part];
     }
     lescrungo[split[split.length - 1]] = value;
+}
+
+export function reset() {
+    return fs.writeFile(config_path, JSON5.stringify(defaultConfig, null, 2));
 }

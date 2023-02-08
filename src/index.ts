@@ -105,29 +105,48 @@ yargs(hideBin(process.argv))
 		const spinnies = new Spinnies();
 		//const config = await readConfig();
 		function mkreq() {
-			return fetch("https://duckcloud.pcprojects.tk/shutoff/"+cfw.config.selected, { headers: { Cookie: `token=${cfw.config.token}`}});
+			return fetch("https://duckcloud.pcprojects.tk/shutoff/"+cfw.config.selected, { headers: { Cookie: `token=${cfw.config.token}`}})
+				.then(resp => resp.text())
+				.then(data => {
+					if (data.includes('Sorry, your VM failed to launch') && cfw.config.powerctl.experimental.failureDetection) {
+						// VeNT
+						throw 'VM failed to launch';
+					}
+				})
 		}
 		switch (argv.action) {
 			case "shutdown": {
 				spinnies.add('shutdown', { text: 'Shutdown' });
-				await mkreq();
-				spinnies.succeed('shutdown');
+				try {
+					await mkreq()
+					spinnies.succeed('shutdown');
+				} catch(err: any) {
+					spinnies.fail('shutdown', { text: err.toString() });
+				}
 				break;
 			}
 			case "start": {
 				spinnies.add('start', { text: 'Startup' });
-				await mkreq();
-				spinnies.succeed('start');
+				try {
+					await mkreq();
+					spinnies.succeed('start');
+				} catch(err: any) {
+					spinnies.fail('start', { text: err.toString() })
+				}
 				break;
 			}
 			case "restart": {
 				spinnies.add('shutdown', { text: 'Shutdown' });
 				spinnies.add('restart', { text: 'Restart' });
-				await mkreq();
-				spinnies.succeed('shutdown')
-				console.log('Restarting...')
-				await mkreq();
-				spinnies.succeed('restart')
+				try {
+					await mkreq();
+					spinnies.succeed('shutdown')
+				} catch(err: any) { spinnies.fail('shutdown', { text: err.toString() })}
+				//console.log('Restarting...')
+				try {
+					await mkreq();
+					spinnies.succeed('restart')
+				} catch(err: any) { spinnies.fail('restart', { text: err.toString() })}
 				break;
 			}
 		}

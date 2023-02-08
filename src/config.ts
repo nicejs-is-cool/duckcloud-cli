@@ -27,6 +27,11 @@ export interface Config {
     script: {
         eof: string
     }
+    powerctl: {
+        experimental: {
+            failureDetection: boolean
+        }
+    }
 }
 
 export const config_path = path.join(os.homedir(), "./.duckcl.json5");
@@ -53,6 +58,11 @@ export const defaultConfig: Config = {
     },
     script: {
         eof: "DUCKCLOUD_CLI_SCRIPT_EOF"
+    },
+    powerctl: {
+        experimental: {
+            failureDetection: false
+        }
     }
 }
 

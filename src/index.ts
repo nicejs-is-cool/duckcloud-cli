@@ -8,7 +8,28 @@ import path from 'path';
 import io from 'socket.io-client';
 import Spinnies from 'spinnies';
 import readline from 'readline';
+import os from 'os'
+import JSON5 from 'json5';
+const cfgdirPath = path.join(os.homedir(), "./.duckcl");
 
+try {
+	await fs.access(cfgdirPath, fs.constants.R_OK | fs.constants.W_OK)
+} catch(err) {
+	console.warn(`duckcl: warn: failed to access ${cfgdirPath}, creating a new folder...`);
+	await fs.mkdir(cfgdirPath);
+	await fs.writeFile(path.join(cfgdirPath, "./default.json5"), JSON5.stringify({
+		token: null,
+		selected: 0,
+		rm: {
+			askForConfirmation: true
+		}
+	}))
+}
+
+process.env["NODE_CONFIG_DIR"] = path.join(os.homedir(), "./.duckcl");
+let config: typeof import("config");
+
+config = await import("config")
 interface Container {
 	vmname: string;
 	vmname_encoded: string;

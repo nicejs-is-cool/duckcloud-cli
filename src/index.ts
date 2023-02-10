@@ -305,6 +305,10 @@ ${cfw.config.script.eof}\n`);
 				describe: 'Reset your entire configuration to the defaults (useful if upgrading to new version with more config entries)',
 				type: 'boolean',
 				alias: ['r']
+			}).option('object', {
+				describe: 'Object datatype (data parsed as JSON5)',
+				type: 'string',
+				alias: ['o', 'obj']
 			})
 		, async argv => {
 			if (argv.reset) {
@@ -322,6 +326,11 @@ ${cfw.config.script.eof}\n`);
 			if (argv.string) return cfw.set(argv.path, argv.string);
 			if (argv.number) return cfw.set(argv.path, argv.number);
 			if (argv.boolean) return cfw.set(argv.path, !!argv.boolean);
+			if (argv.object) {
+				const JSON5 = await import('json5');
+				
+				return cfw.set(argv.path, JSON5.default.parse(argv.object));
+			}
 			console.error('No data type specified');
 		})
 	.demandCommand()

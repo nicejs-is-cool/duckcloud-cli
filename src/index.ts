@@ -8,6 +8,8 @@ import io from 'socket.io-client';
 import Spinnies from 'spinnies';
 import readline from 'readline';
 import * as cfw from './config.js';
+import { promisify } from 'util';
+import axios from 'axios';
 
 interface Container {
 	vmname: string;
@@ -19,16 +21,54 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 
 yargs(hideBin(process.argv))
 	.scriptName('duckcl')
-	.command('login <token>', 'Login with duckcloud', yargs => {
-		return yargs.positional('token', {
-			describe: 'Your token',
+	.command('login <username>', 'Login with duckcloud', yargs => {
+		return yargs.positional('username', {
+			describe: 'Your username',
 			type: 'string'
-		})
+		}).option('ultimate-logon', {
+			alias: ['u'],
+			describe: 'Use UltimateLogon as the authentication method',
+			type: 'boolean'
+		}).option('password', {
+			alias: ['p'],
+			describe: 'Specify password inline',
+			type: 'string'
+		}).demandOption('username')
 	}, async argv => {
 		//const config = JSON.parse(await fs.readFile(path.join(__dirname, "./config.json"), 'utf-8'));
 		//config.token = argv.token;
 		//await fs.writeFile(configf, JSON.stringify(config, null, 2));
 		
+		const creds = new URLSearchParams();
+		creds.append('username', argv.username)
+		if (argv.password) {
+			creds.append('password', argv.password);
+		} else {
+			const rl = readline.createInterface(process.stdin, process.stdout);
+			const aquestion: (q: string) => Promise<string> = (q: string) => new Promise(resolve => rl.question(q, resolve));
+			creds.append('password', await aquestion("Password: "))
+		}
+		//console.log(creds.toString());
+		console.log('Authenticating...')
+		/*const resp = await fetch('https://duckcloud.pcprojects.tk/login', {
+			method: 'POST',
+			body: creds
+		})
+		console.log('Status code:', resp.status);
+		const cookie = resp.headers.get('set-cookie')
+		
+		console.log(cookie);*/
+		const resp = await fetch(`${cfw.config.server}/login`, {
+			method: 'POST',
+			body: creds,
+			redirect: 'manual'
+		});
+		console.log('Status code:', resp.status, resp.statusText)
+		console.log('(Should be 302)');
+		const token = resp.headers.get('set-cookie')?.split(';')[0].split('=')[1];
+		//console.log(token);
+		if (!token) return console.error('Token missing');
+		cfw.config.token = token;
 		process.exit(0);
 	})
 	.command('container <id>', 'Select a container', yargs => {

@@ -32,7 +32,8 @@ export interface Config {
         experimental: {
             failureDetection: boolean
         }
-    }
+    },
+    server: string
 }
 
 export const config_path = path.join(os.homedir(), "./.duckcl.json5");
@@ -65,7 +66,8 @@ export const defaultConfig: Config = {
         experimental: {
             failureDetection: false
         }
-    }
+    },
+    server: "https://duckcloud.pcprojects.tk"
 }
 
 try {
@@ -90,7 +92,7 @@ function mkproxy(lastobj: string = ""): Config {
         },
         set(target: any, p: string, value: any, receiver: any) {
             target[p] = value;
-            console.log(p, value);
+            //console.log(p, value);
             fss.writeFileSync(config_path, JSON5.stringify(cfgp, null, 2));
             return true;
         }

@@ -26,7 +26,8 @@ export interface Config {
     },
     script: {
         eof: string,
-        shell: string
+        shell: string,
+        cat: string
     }
     powerctl: {
         experimental: {
@@ -60,7 +61,8 @@ export const defaultConfig: Config = {
     },
     script: {
         eof: "DUCKCLOUD_CLI_SCRIPT_EOF",
-        shell: "bash"
+        shell: "bash",
+        cat: "cat"
     },
     powerctl: {
         experimental: {

@@ -82,8 +82,8 @@ try {
 
 
 export const cfgp: Config = JSON5.parse(await fs.readFile(config_path, 'utf-8'));
-function mkproxy(lastobj: string = ""): Config {
-    return new Proxy(cfgp, {
+function mkproxy(obj: any): Config {
+    return new Proxy(obj, {
         get(target: any, property, receiver) {
             //console.log(target, property, receiver);
             //return 69;
@@ -94,13 +94,13 @@ function mkproxy(lastobj: string = ""): Config {
         },
         set(target: any, p: string, value: any, receiver: any) {
             target[p] = value;
-            //console.log(p, value);
+            console.log(p, value);
             fss.writeFileSync(config_path, JSON5.stringify(cfgp, null, 2));
             return true;
         }
     })
 }
-export const config = mkproxy();
+export const config = mkproxy(cfgp);
 export function get<T>(fpath: string): T {
     if (!fpath.includes('.')) {
         //@ts-ignore

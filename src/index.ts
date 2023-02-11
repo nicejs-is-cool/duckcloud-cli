@@ -130,6 +130,7 @@ yargs(hideBin(process.argv))
 				process.stdout.on('resize', () => {
 					socket.emit('resize', process.stdout.columns, process.stdout.rows);
 				});
+			//console.log(cfw.config.sh.stdinRawMode);
 			process.stdin.setRawMode(cfw.config.sh.stdinRawMode);
 			process.stdin.on('data', d => {
 				//console.log(d[0], lastPressedCtrlC)

@@ -118,7 +118,7 @@ yargs(hideBin(process.argv))
 		});
 		socket.on('datad', data => process.stdout.write(data));
 		socket.emit('vmselect', cfw.config.selected)
-		let lastPressedCtrlC = false
+		let commandMode = false;
 		socket.on('connect', () => {
 			if (!argv.noClear && cfw.config.sh.clearTerminalOnConnection) {
 				socket.emit('datad', 'clear\n');
@@ -134,14 +134,25 @@ yargs(hideBin(process.argv))
 			process.stdin.setRawMode(cfw.config.sh.stdinRawMode);
 			process.stdin.on('data', d => {
 				//console.log(d[0], lastPressedCtrlC)
-				if (d[0] === 3) {
-					if (lastPressedCtrlC) {
-						socket.disconnect();
+				if (d[0] === 0x1d) {
+					if (commandMode) {
+						process.stdout.write("^]");
+						socket.emit('datad', d.toString(cfw.config.sh.datadEncoding));
+						commandMode = false;
+						return;
 					} else {
-						lastPressedCtrlC = true;
+						commandMode = true;
+						//return;
 					}
 				} else {
-					if (lastPressedCtrlC) lastPressedCtrlC = false;
+					if (commandMode) {
+						switch (d[0]) {
+							case (".".charCodeAt(0)):
+								socket.disconnect();
+								break;
+						}
+						commandMode = false;
+					}
 				}
 				
 				socket.emit('datad', d.toString(cfw.config.sh.datadEncoding))

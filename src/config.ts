@@ -96,7 +96,7 @@ function mkproxy(obj: any): Config {
         },
         set(target: any, p: string, value: any, receiver: any) {
             target[p] = value;
-            console.log(p, value);
+            //console.log(p, value);
             fss.writeFileSync(config_path, JSON5.stringify(cfgp, null, 2));
             return true;
         }

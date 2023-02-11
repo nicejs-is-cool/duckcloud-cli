@@ -52,7 +52,7 @@ export const defaultConfig: Config = {
         askForConfirmation: true
     },
     sh: {
-        clearTerminalOnConnection: true,
+        clearTerminalOnConnection: false,
         resizeTerminalOnConnection: true,
         listenForTerminalResize: true,
         datadEncoding: 'utf-8',

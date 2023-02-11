@@ -325,12 +325,16 @@ ${cfw.config.script.eof}\n`);
 			body.append('shouldHaveNetworking', settings.network);
 			body.append('shouldUse512mbRAM', settings.pro);
 			body.append('distro', settings.distro)
-			await fetch(cfw.config.server+'/newVM', {
+			const resp = await fetch(cfw.config.server+'/newVM', {
 				method: 'POST',
 				headers: { Cookie: `token=${cfw.config.token}` },
 				body
 			});
-			console.log(`container "${settings.name}" created`);
+			if (resp.status === 200) {
+				console.log(`container "${settings.name}" created`);
+			} else {
+				console.log("failed to create container with status code", resp.status);
+			}
 			process.exit(0);
 		})
 		.command('ls', 'List all containers', yargs => yargs, async argv => {

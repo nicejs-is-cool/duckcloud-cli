@@ -432,9 +432,9 @@ ${cfw.config.script.eof}\n`);
 				console.log(cfw.get(argv.path));
 				return;
 			}
-			if (argv.string) return cfw.set(argv.path, argv.string);
-			if (argv.number) return cfw.set(argv.path, argv.number);
-			if (argv.boolean) return cfw.set(argv.path, !!argv.boolean);
+			if (argv.hasOwnProperty('string')) return cfw.set(argv.path, argv.string);
+			if (argv.hasOwnProperty('number')) return cfw.set(argv.path, argv.number);
+			if (argv.hasOwnProperty('boolean')) return cfw.set(argv.path, !!argv.boolean);
 			if (argv.object) {
 				const JSON5 = await import('json5');
 				

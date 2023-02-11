@@ -252,7 +252,7 @@ ${cfw.config.script.eof}\n`);
 			const rl = readline.createInterface(process.stdin, process.stdout);
 			//const config = await readConfig();
 			function del() {
-				return fetch(`https://duckcloud.pcprojects.tk/burn/${cfw.config.selected}`, {
+				return fetch(`${cfw.config.server}/burn/${cfw.config.selected}`, {
 					headers: { Cookie: `token=${cfw.config.token}` }
 				});
 			}
@@ -329,7 +329,7 @@ ${cfw.config.script.eof}\n`);
 				}
 				return;
 			}
-			const resp = await fetch("https://duckcloud.pcprojects.tk/listContainer", {
+			const resp = await fetch(cfw.config.server + "/listContainer", {
 				headers: { Cookie: `token=${cfw.config.token}` }
 			});
 			const containers: Container[] = await resp.json();

@@ -409,15 +409,13 @@ ${cfw.config.script.eof}\n`);
 				return console.log('Configuration soft-resetted (--soft-reset/-t)');
 			}
 			if (argv.update) {
-				const recursive = (obj: any, compare: any) => {
+				const recursive = (obj: any, compare: any, logAppend: string = "") => {
 					for (const [ key, value ] of Object.entries(compare)) {
 						if (typeof obj[key] === "object") {
-							console.log(`> ${key}`);
-							recursive(obj[key], compare[key]);
-							console.log("<");
+							recursive(obj[key], compare[key], `> ${key} `);
 						}
 						if (!obj.hasOwnProperty(key)) {
-							console.log(`+ ${key}`);
+							console.log(`${logAppend}+ ${key}`);
 							obj[key] = compare[key];
 							continue;
 						}

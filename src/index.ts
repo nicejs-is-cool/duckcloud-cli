@@ -268,7 +268,7 @@ ${cfw.config.script.eof}\n`);
 					headers: { Cookie: `token=${cfw.config.token}` }
 				});
 			}
-			if (!argv.yes || cfw.config.rm.askForConfirmation) {
+			if (!argv.yes && cfw.config.rm.askForConfirmation) {
 				return rl.question('Are you sure you want to delete this container? (y/n) ', async answer => {
 					if (!answer.startsWith('y')) return process.exit(0);
 					//const config = await readConfig()
@@ -277,6 +277,7 @@ ${cfw.config.script.eof}\n`);
 				})
 			}
 			await del();
+			process.exit(0);
 		})
 		.command('create', 'Create a new container', yargs => {
 			return yargs

@@ -8,8 +8,6 @@ import io from 'socket.io-client';
 import Spinnies from 'spinnies';
 import readline from 'readline';
 import * as cfw from './config.js';
-import { promisify } from 'util';
-import axios from 'axios';
 import * as ul from './ultimatelogon.js'
 
 interface Container {

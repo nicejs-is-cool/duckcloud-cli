@@ -416,7 +416,7 @@ ${cfw.config.script.eof}\n`);
 							recursive(obj[key], compare[key]);
 							console.log("<");
 						}
-						if (!obj[key]) {
+						if (!obj.hasOwnProperty(key)) {
 							console.log(`+ ${key}`);
 							obj[key] = compare[key];
 							continue;

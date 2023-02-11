@@ -300,6 +300,11 @@ ${cfw.config.script.eof}\n`);
 					type: 'boolean',
 					describe: 'Pro mode/boost (container won\'t be created if you don\'t have a pro account)'
 				})
+				.option('distro', {
+					alias: ['d'],
+					type: 'string',
+					describe: 'Distribution to create the container with (values: debian, archlinux)'
+				})
 				/*.option('script', {
 					alias: ['s', 'run-script'],
 					type: 'string',
@@ -311,13 +316,15 @@ ${cfw.config.script.eof}\n`);
 			const settings = {
 				name: argv.name || jsonfile.name,
 				network: argv.network || jsonfile.network || cfw.config.create.networkingEnabledByDefault || false,
-				pro: argv.pro || jsonfile.pro || cfw.config.create.proEnabledByDefault || false
+				pro: argv.pro || jsonfile.pro || cfw.config.create.proEnabledByDefault || false,
+				distro: argv.distro || jsonfile.distro || cfw.config.create.defaultDistro || 'debian'
 			}
 			if (!settings.name) return console.error('Missing container name');
 			const body = new URLSearchParams();
 			body.append('vm_name', settings.name);
 			body.append('shouldHaveNetworking', settings.network);
 			body.append('shouldUse512mbRAM', settings.pro);
+			body.append('distro', settings.distro)
 			await fetch(cfw.config.server+'/newVM', {
 				method: 'POST',
 				headers: { Cookie: `token=${cfw.config.token}` },

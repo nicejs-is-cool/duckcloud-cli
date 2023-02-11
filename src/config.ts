@@ -9,7 +9,8 @@ export interface Config {
     selected: number;
     create: {
         networkingEnabledByDefault: boolean,
-        proEnabledByDefault: boolean
+        proEnabledByDefault: boolean,
+        defaultDistro: PCd.DuckCloud.Distro
     },
     rm: {
         askForConfirmation: boolean
@@ -44,7 +45,8 @@ export const defaultConfig: Config = {
     selected: 0,
     create: {
         networkingEnabledByDefault: false,
-        proEnabledByDefault: false
+        proEnabledByDefault: false,
+        defaultDistro: "debian"
     },
     rm: {
         askForConfirmation: true

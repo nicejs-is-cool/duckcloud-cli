@@ -14,4 +14,7 @@ declare namespace PCd {
 			}
 		}
 	}
+	export namespace DuckCloud {
+		export type Distro = "debian" | "archlinux"
+	}
 }

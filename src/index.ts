@@ -216,7 +216,7 @@ yargs(hideBin(process.argv))
 			if (!argv.path) {console.error('missing file path'); return};
 			const file = await fs.readFile(argv.path, 'utf-8');
 			console.log('duckcl: Press Q to quit.');
-			const socket = io("https://duckcloud.pcprojects.tk", {
+			const socket = io(cfw.config.server, {
 				transportOptions: {
 					polling: {
 						extraHeaders: {
@@ -306,7 +306,7 @@ ${cfw.config.script.eof}\n`);
 			body.append('vm_name', settings.name);
 			body.append('shouldHaveNetworking', settings.network);
 			body.append('shouldUse512mbRAM', settings.pro);
-			await fetch('https://duckcloud.pcprojects.tk/newVM', {
+			await fetch(cfw.config.server+'/newVM', {
 				method: 'POST',
 				headers: { Cookie: `token=${cfw.config.token}` },
 				body
@@ -319,7 +319,7 @@ ${cfw.config.script.eof}\n`);
 			console.log('name\t\tstatus\tid');
 			if (cfw.config.ls.useLegacyQuickParse) {
 				const qparse = (await import("./quickparse.js")).default;
-				const resp = await fetch("https://duckcloud.pcprojects.tk", {
+				const resp = await fetch(cfw.config.server, {
 					headers: { Cookie: `token=${cfw.config.token}` }
 				});
 				const pagehtml = await resp.text();

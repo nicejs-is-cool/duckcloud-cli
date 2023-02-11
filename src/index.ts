@@ -10,6 +10,7 @@ import readline from 'readline';
 import * as cfw from './config.js';
 import { promisify } from 'util';
 import axios from 'axios';
+import * as ul from './ultimatelogon.js'
 
 interface Container {
 	vmname: string;
@@ -19,11 +20,16 @@ interface Container {
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
+function fetchw(input: RequestInfo | URL, init?: RequestInit | undefined): Promise<Response> {
+	if (typeof input === "string") return fetch(cfw.config.server+input, init);
+	return fetch(input, init);
+}
+
 yargs(hideBin(process.argv))
 	.scriptName('duckcl')
-	.command('login <username>', 'Login with duckcloud', yargs => {
+	.command('login [username]', 'Login with duckcloud', yargs => {
 		return yargs.positional('username', {
-			describe: 'Your username',
+			describe: 'Your username (not required if used with --ultimate-logon)',
 			type: 'string'
 		}).option('ultimate-logon', {
 			alias: ['u'],
@@ -33,12 +39,23 @@ yargs(hideBin(process.argv))
 			alias: ['p'],
 			describe: 'Specify password inline',
 			type: 'string'
-		}).demandOption('username')
+		})
 	}, async argv => {
 		//const config = JSON.parse(await fs.readFile(path.join(__dirname, "./config.json"), 'utf-8'));
 		//config.token = argv.token;
 		//await fs.writeFile(configf, JSON.stringify(config, null, 2));
-		
+		if (argv.ultimateLogon) {
+			//const deviceSession: PCd.Ultimatelogon.DeviceStartSession = await (await fetch("https://ultimatelogon.pcprojects.tk/deviceStartSess")).json();
+			const device = await ul.StartDeviceAuth();
+			console.log('Please go on https://ultimatelogon.pcprojects.tk/deviceLogon and input %s', device.code);
+			const spinnies = new Spinnies();
+			spinnies.add('wait4auth', { text: 'Waiting for authentication'});
+			const user = await device.wait();
+			spinnies.succeed('wait4auth');
+			console.log(user);
+			return process.exit(0);
+		}
+		if (!argv.username) return console.error('Please specify a username')
 		const creds = new URLSearchParams();
 		creds.append('username', argv.username)
 		if (argv.password) {

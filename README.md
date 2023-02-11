@@ -36,3 +36,5 @@ Ultimatelogon login is in beta and doesn't work right now, please don't try usin
 If you upgraded to a newer version of `duckcloud-cli` with new configuration entries,
 you'll need to run `duckcl config --reset` to reset your configuration back to
 the newer defaults.
+## How do I exit ~~vim~~ the shell?
+Press Ctrl+] and `.`

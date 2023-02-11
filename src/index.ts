@@ -109,7 +109,7 @@ yargs(hideBin(process.argv))
 		}),
 	async argv => {
 		//const config = JSON.parse(await fs.readFile(configf, "utf-8"))
-		const socket = io("https://duckcloud.pcprojects.tk", {
+		const socket = io(cfw.config.server, {
 			transportOptions: {
 				polling: {
 					extraHeaders: {
@@ -162,7 +162,7 @@ yargs(hideBin(process.argv))
 		const spinnies = new Spinnies();
 		//const config = await readConfig();
 		function mkreq() {
-			return fetch("https://duckcloud.pcprojects.tk/shutoff/"+cfw.config.selected, { headers: { Cookie: `token=${cfw.config.token}`}})
+			return fetch(cfw.config.server+"/shutoff/"+cfw.config.selected, { headers: { Cookie: `token=${cfw.config.token}`}})
 				.then(resp => resp.text())
 				.then(data => {
 					if (data.includes('Sorry, your VM failed to launch') && cfw.config.powerctl.experimental.failureDetection) {

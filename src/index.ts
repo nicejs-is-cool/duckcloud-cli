@@ -388,11 +388,43 @@ ${cfw.config.script.eof}\n`);
 				describe: 'Object datatype (data parsed as JSON5)',
 				type: 'string',
 				alias: ['o', 'obj']
+			}).option('soft-reset', {
+				describe: 'Resets your configuration to defaults but keeps your token',
+				type: 'boolean',
+				alias: ['t']
+			}).option('update', {
+				describe: '(Attempt) to update your configuration to the latest one',
+				type: 'boolean',
+				alias: ['u']
 			})
 		, async argv => {
 			if (argv.reset) {
 				await cfw.reset();
 				return console.log('Configuration restored to defaults (-r/--reset)');
+			}
+			if (argv.softReset) {
+				const token = cfw.config.token;
+				await cfw.reset();
+				cfw.config.token = token;
+				return console.log('Configuration soft-resetted (--soft-reset/-t)');
+			}
+			if (argv.update) {
+				const recursive = (obj: any, compare: any) => {
+					for (const [ key, value ] of Object.entries(compare)) {
+						if (typeof obj[key] === "object") {
+							console.log(`> ${key}`);
+							recursive(obj[key], compare[key]);
+							console.log("<");
+						}
+						if (!obj[key]) {
+							console.log(`+ ${key}`);
+							obj[key] = compare[key];
+							continue;
+						}
+					}
+				}
+				recursive(cfw.config, cfw.defaultConfig);
+				return console.log('updated configuration');
 			}
 			if (!argv.path) {
 				console.log(cfw.cfgp);

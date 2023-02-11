@@ -83,7 +83,7 @@ try {
 }
 
 
-export const cfgp: Config = JSON5.parse(await fs.readFile(config_path, 'utf-8'));
+export let cfgp: Config = JSON5.parse(await fs.readFile(config_path, 'utf-8'));
 function mkproxy(obj: any): Config {
     return new Proxy(obj, {
         get(target: any, property, receiver) {
@@ -134,5 +134,6 @@ export async function set(fpath: string, value: any) {
 }
 
 export function reset() {
+    cfgp = structuredClone(defaultConfig);
     return fs.writeFile(config_path, JSON5.stringify(defaultConfig, null, 2));
 }

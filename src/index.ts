@@ -229,7 +229,7 @@ yargs(hideBin(process.argv))
 			});
 			socket.on('datad', data => process.stdout.write(data));
 			socket.emit('vmselect', cfw.config.selected)
-			socket.emit('datad', `cat << ${cfw.config.script.eof} | bash
+			socket.emit('datad', `cat << ${cfw.config.script.eof} | ${cfw.config.script.shell}
 ${file}
 ${cfw.config.script.eof}\n`);
 			process.stdin.setRawMode(true);

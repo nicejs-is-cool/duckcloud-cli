@@ -134,6 +134,15 @@ export async function set(fpath: string, value: any) {
 }
 
 export function reset() {
-    cfgp = structuredClone(defaultConfig);
+    for (let key in cfgp) {
+        delete (cfgp as any)[key];
+    }
+    for (let key in defaultConfig) {
+        if (typeof (cfgp as any)[key] === "object") {
+            (cfgp as any)[key] = structuredClone((defaultConfig as any)[key]);
+            break;
+        }
+        (cfgp as any)[key] = (defaultConfig as any)[key];
+    }
     return fs.writeFile(config_path, JSON5.stringify(defaultConfig, null, 2));
 }

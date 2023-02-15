@@ -1,3 +1,6 @@
+import io from 'socket.io-client'
+import EventEmitter from 'events';
+
 export enum Status {
 	online,
 	offline
@@ -8,9 +11,9 @@ export interface ServerContainer {
 	status: Status;
 }
 export enum Distro {
-	"debian",
-	"archlinux",
-	"duckcloud/suspiral"
+	debian="debian",
+	archlinux="archlinux",
+	"duckcloud/suspiral"="duckcloud/suspiral"
 }
 export class HTTPError extends Error {
 	constructor(message: string, public statuscode: number) {
@@ -54,7 +57,52 @@ export class User {
 		});
 		return resp.status
 	}
-	
+}
+export class Shell extends EventEmitter {
+	public socket: import("socket.io-client").Socket;
+	constructor(public container: Container) {
+		super();
+		this.socket = io(container.duckcloud.server, {
+			transportOptions: {
+				polling: {
+					extraHeaders: {
+						Cookie: `token=${container.duckcloud.User.token}`
+					}
+				}
+			}
+		});
+		this.socket.on('connect', () => {
+			this.socket.emit('vmselect', this.container.id);
+			this.emit('connect')
+		})
+		this.socket.on('datad', data => {
+			this.emit('data', data);
+		})
+		this.socket.on('disconnect', data => {
+			this.emit('disconnect');
+		})
+	}
+	/**
+	 * Sends the characters in {@link data} to the container's stdin.
+	 * @param data The characters to send
+	 */
+	Send(data: string | number) {
+		this.socket.emit('datad', data);
+	}
+	/**
+	 * Resize the container's pty
+	 * @param width Width of the pty
+	 * @param height Height of the pty
+	 */
+	Resize(width: number, height: number) {
+		this.emit('resize', width, height);
+	}
+	/**
+	 * Disconnect from the shell.
+	 */
+	Disconnect() {
+		this.socket.disconnect();
+	}
 }
 export class Container {
 	constructor(public id: number, public name: string, public status: Status, public duckcloud: DuckCloud) {}
@@ -74,10 +122,21 @@ export class Container {
 					return true;
 				})
 	}
+	/**
+	 * Removes/Deletes the VM.
+	 * @returns boolean indicating success
+	 */
 	Remove(): Promise<boolean> {
 		return fetch(`${this.duckcloud.server}/burn/${this.id}`, {
 			headers: { Cookie: `token=${this.duckcloud.User.token}` }
 		}).then(resp => resp.status === 200);
+	}
+	/**
+	 * Get this container's shell
+	 * @returns Container's shell
+	 */
+	Shell(): Shell {
+		return new Shell(this);
 	}
 }
 export class DuckCloud {

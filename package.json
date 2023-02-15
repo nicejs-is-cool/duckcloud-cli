@@ -34,5 +34,6 @@
   "bugs": {
     "url": "https://github.com/nicejs-is-cool/duckcloud-cli/issues"
   },
-  "homepage": "https://github.com/nicejs-is-cool/duckcloud-cli#readme"
+  "homepage": "https://github.com/nicejs-is-cool/duckcloud-cli#readme",
+  "types": "./dist/"
 }

@@ -8,8 +8,8 @@ export interface ServerContainer {
 	status: Status;
 }
 export enum Distro {
-	debian,
-	archlinux,
+	"debian",
+	"archlinux",
 	"duckcloud/suspiral"
 }
 export class HTTPError extends Error {
@@ -64,7 +64,7 @@ export class Container {
 	 */
 	TogglePower(): Promise<boolean> {
 		return fetch(this.duckcloud.server+"/shutoff/"+this.id,
-			{ headers: { Cookie: `token=${this.duckcloud.user.token}`}})
+			{ headers: { Cookie: `token=${this.duckcloud.User.token}`}})
 				.then(resp => resp.text())
 				.then(data => {
 					if (data.includes('Sorry, your VM failed to launch')) {
@@ -76,12 +76,12 @@ export class Container {
 	}
 	Remove(): Promise<boolean> {
 		return fetch(`${this.duckcloud.server}/burn/${this.id}`, {
-			headers: { Cookie: `token=${this.duckcloud.user.token}` }
+			headers: { Cookie: `token=${this.duckcloud.User.token}` }
 		}).then(resp => resp.status === 200);
 	}
 }
 export class DuckCloud {
-	public user!: User;
+	public User!: User;
 	constructor(public server: string) {}
 	/**
 	 * Logs onto a user
@@ -100,7 +100,7 @@ export class DuckCloud {
 		});
 		const token = resp.headers.get('set-cookie')?.split(';')[0].split('=')[1];
 		if (!token) return false;
-		this.user = new User(token, this);
+		this.User = new User(token, this);
 		return true;
 	}
 }

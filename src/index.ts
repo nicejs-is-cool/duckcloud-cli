@@ -9,6 +9,7 @@ import Spinnies from 'spinnies';
 import readline from 'readline';
 import * as cfw from './config.js';
 import * as ul from './ultimatelogon.js'
+import net from 'net';
 
 interface Container {
 	vmname: string;
@@ -442,5 +443,80 @@ ${cfw.config.script.eof}\n`);
 			}
 			console.error('No data type specified');
 		})
+		.command('forward <remotePort> <localHost>', 'Forwards a TCP port from a DuckCloud container to your local machine',
+			yargs => yargs.positional('remotePort', {
+				describe: 'Remote port in the container',
+				type: 'number'
+			}).positional('localHost', {
+				describe: 'local host with port (example: localhost:8022)',
+				type: 'string'
+			})
+			.option('verbose', {
+				describe: 'Be more verbose and log packets sent in and out',
+				alias: ['v'],
+				type: 'boolean'
+			}).demandOption(["remotePort", "localHost"]), argv => {
+				const rport = argv.remotePort;
+				
+				const serv = net.createServer(socket => {
+					console.log('New connection from ' + socket.remoteAddress)
+					const remotesoc = io(cfw.config.server, {
+						transportOptions: {
+							polling: {
+								extraHeaders: {
+									Cookie: `token=${cfw.config.token}`
+								}
+							}
+						}
+					});
+					let timeoutId = -1;
+					let pkqueue: Buffer[] = [];
+					remotesoc.on('connect', () => {
+						remotesoc.emit("tcp_vmselect", cfw.config.selected, rport);
+						console.log('Connected to DuckCloud');
+						clearInterval(timeoutId); // just to make sure
+						//@ts-ignore
+						timeoutId = setInterval(() => { // somehow this fixes the timing issues
+							for (let i = 0; i < pkqueue.length; i++) {
+								remotesoc.emit("datad", pkqueue.shift())
+							}
+							//pkqueue = [];
+						}, 100)
+						
+					})
+					remotesoc.on('datad', data => {
+						if (argv.verbose) console.log('[duckcloud -> client]',data);
+						if (socket.closed) return console.error('attempt to write to closed socket');
+						socket.write(data);
+					})
+					socket.on('data', data => {
+						if (argv.verbose) console.log('[client -> duckcloud]',data);
+						if (!remotesoc.connected) {
+							pkqueue.push(data);
+							return;
+						}
+						remotesoc.emit('datad', data);
+					})
+					remotesoc.on('disconnect', reason => {
+						console.log(`DuckCloud disconnected for "${reason}"`);
+						socket.end();
+					})
+					remotesoc.on('disconnect()', () => {
+						console.log("Container disconnected");
+						socket.end();
+					})
+					socket.on('close', () => {
+						console.log("Client closed the connection");
+						remotesoc.disconnect(); // i think this is how i should do it?
+					})
+					socket.on('error', (err) => {
+						console.error('Client errored out', err);
+						remotesoc.disconnect();
+					})
+				});
+				serv.listen(argv.localHost);
+				console.log(`Forwarding data on ${argv.localHost} to remote port ${argv.remotePort}`)
+				
+			})
 	.demandCommand()
 	.parse()

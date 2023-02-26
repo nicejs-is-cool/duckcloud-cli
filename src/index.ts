@@ -10,6 +10,7 @@ import readline from 'readline';
 import * as cfw from './config.js';
 import * as ul from './ultimatelogon.js'
 import net from 'net';
+import * as mod from './module.js'
 
 interface Container {
 	vmname: string;
@@ -22,6 +23,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 function fetchw(input: RequestInfo | URL, init?: RequestInit | undefined): Promise<Response> {
 	if (typeof input === "string") return fetch(cfw.config.server+input, init);
 	return fetch(input, init);
+}
+
+const DuckCloud = new mod.DuckCloud(cfw.config.server);
+
+if (cfw.config.token) {
+	DuckCloud.LoginWithToken(cfw.config.token);
 }
 
 yargs(hideBin(process.argv))
@@ -443,19 +450,19 @@ ${cfw.config.script.eof}\n`);
 			}
 			console.error('No data type specified');
 		})
-		.command('forward <remotePort> <localHost>', 'Forwards a TCP port from a DuckCloud container to your local machine',
+		.command('forward <remotePort> <localpath>', 'Forwards a TCP port from a DuckCloud container to your local machine',
 			yargs => yargs.positional('remotePort', {
 				describe: 'Remote port in the container',
 				type: 'number'
-			}).positional('localHost', {
-				describe: 'local host with port (example: localhost:8022)',
+			}).positional('localpath', {
+				describe: 'local path to listen on (example: 8022 or tcp://localhost:8022)',
 				type: 'string'
 			})
 			.option('verbose', {
 				describe: 'Be more verbose and log packets sent in and out',
 				alias: ['v'],
 				type: 'boolean'
-			}).demandOption(["remotePort", "localHost"]), argv => {
+			}).demandOption(["remotePort", "localpath"]), argv => {
 				const rport = argv.remotePort;
 				
 				const serv = net.createServer(socket => {
@@ -514,9 +521,66 @@ ${cfw.config.script.eof}\n`);
 						remotesoc.disconnect();
 					})
 				});
-				serv.listen(argv.localHost);
-				console.log(`Forwarding data on ${argv.localHost} to remote port ${argv.remotePort}`)
+				serv.listen(argv.localpath);
+				console.log(`Forwarding data on ${argv.localpath} to remote port ${argv.remotePort}`)
 				
 			})
+			.command('pro', 'pro control', yargs =>
+				yargs.command('apply <code>', 'Apply a pro code', yargs =>
+					yargs.positional('code', {
+						describe: 'Pro code to apply',
+						type: 'string'
+					}).demandOption(['code']),
+					async argv => {
+						// Apply pro token
+						const resp = await DuckCloud.User.ApplyForPro(argv.code)
+						if (resp === 302) {
+							return console.error('Server returned the wrong status code (302), maybe your token got invalidated?');
+						}
+					}
+				).command('create [expiresAfterUsage]',
+				'Creates a PRO token, which also will be returned on the page. You must do that from the pro_coder account!',
+					yargs => yargs.positional('expiresAfterUsage', {
+						describe: 'Should token expire after usage? (set to true or false)',
+						type: 'boolean',
+						default: false
+					}), async argv => {
+						const body = new URLSearchParams();
+						body.append('expiresAfterUsage', argv.expiresAfterUsage.toString());
+
+						const resp = await fetch(`${cfw.config.server}/createprocode`, {
+							method: 'POST',
+							body,
+							headers: {
+								Cookie: `token=${cfw.config.token}`
+							},
+							redirect: 'manual'
+						})
+						if (resp.status === 302) {
+							return console.error('Server returned the wrong status code (302), maybe your token got invalidated?');
+						}
+
+					}).command('remove <code>',
+					'Removes an usable PRO token from the pro_coder account, making it unavailable to other users. You must do that from the pro_coder account!',
+						yargs => yargs.positional('code', {
+							describe: 'The code to remove/invalidate',
+							type: 'string'
+						}).demandOption('code'), async argv => {
+							const body = new URLSearchParams();
+							body.append('code', argv.code);
+
+							const resp = await fetch(`${cfw.config.server}/removeprocode`, {
+								method: 'POST',
+								body,
+								headers: {
+									Cookie: `token=${cfw.config.token}`
+								},
+								redirect: 'manual'
+							})
+							if (resp.status === 302) {
+								return console.error('Server returned the wrong status code (302), maybe your token got invalidated?');
+							}
+						})
+				.demandCommand())
 	.demandCommand()
 	.parse()

@@ -36,6 +36,11 @@ export class User {
 		
 		return pcontainers;
 	}
+	Request(input: string, init?: RequestInit | undefined): Promise<Response> {
+		if (!init) init = {};
+		init.headers = { Cookie: `token=${this.token}` }
+		return fetch(this.duckcloud.server+input, init);
+	}
 	/**
 	 * Creates a container.
 	 * @param name Name of the container
@@ -50,13 +55,28 @@ export class User {
 		body.append('shouldHaveNetworking', network.toString());
 		body.append('shouldUse512mbRAM', pro.toString());
 		body.append('distro', distro.toString())
-		const resp = await fetch(this.duckcloud.server+'/newVM', {
+		const resp = await this.Request('/newVM', {
 			method: 'POST',
-			headers: { Cookie: `token=${this.token}` },
 			body
 		});
 		return resp.status
 	}
+	/**
+	 * Apply pro code, created within the `pro_coder` account
+	 * @param code PRO code
+	 * @returns HTTP Status Code
+	 */
+	ApplyForPro(code: string): Promise<number> {
+		// Apply pro token
+		const body = new URLSearchParams();
+		body.append('code', code);
+		return this.Request("/pro_apply", {
+			method: 'POST',
+			body,
+			redirect: 'manual'
+		}).then(resp => resp.status);
+	}
+	
 }
 export class Shell extends EventEmitter {
 	public socket: import("socket.io-client").Socket;
@@ -159,7 +179,14 @@ export class DuckCloud {
 		});
 		const token = resp.headers.get('set-cookie')?.split(';')[0].split('=')[1];
 		if (!token) return false;
-		this.User = new User(token, this);
+		this.LoginWithToken(token);
 		return true;
+	}
+	/**
+	 * Login with a token
+	 * @param token Token of the user
+	 */
+	LoginWithToken(token: string) {
+		this.User = new User(token, this);
 	}
 }

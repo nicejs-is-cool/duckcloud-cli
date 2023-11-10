@@ -129,7 +129,7 @@ yargs(hideBin(process.argv))
 		let commandMode = false;
 		socket.on('connect', () => {
 			if (!argv.noClear && cfw.config.sh.clearTerminalOnConnection) {
-				socket.emit('datad', 'clear\n');
+				//socket.emit('datad', 'clear\n');
 			}
 			// resize lol
 			if (cfw.config.sh.resizeTerminalOnConnection)
@@ -524,22 +524,64 @@ ${cfw.config.script.eof}\n`);
 				serv.listen(argv.localpath);
 				console.log(`Forwarding data on ${argv.localpath} to remote port ${argv.remotePort}`)
 				
+		})
+		.command('proxycmd <port>', 'Proxy stdin/stdout to a TCP connection (can be used for ssh)', yargs =>
+			yargs.positional('port', {
+				describe: 'Port to proxy in the remote container',
+				type: 'number'
+			}).option("name", {
+				describe: 'Name of the container to use instead of the selected one',
+				type: 'string',
+				alias: 'n'
+			}).option('id', {
+				describe: 'Container ID to use instead of the name.',
+				type: 'number',
+				alias: 'i'
+			}).option('ignore-case', {
+				describe: 'Ignore casing in names when using --name',
+				type: 'boolean',
+				alias: 'c',
+				default: false
+			}).demandOption("port"), async argv => {
+				if (!argv.port) throw new Error('where is the fucking port');
+				let container: mod.Container;
+				if (argv.name) {
+					const containers = await DuckCloud.User.GetContainers();
+					const fcontainer = containers.find(value => argv.ignoreCase ?
+						value.name.toLowerCase() === argv.name?.toLowerCase?.() : 
+						value.name === argv.name);
+					if (!fcontainer) throw new Error(`Container with name ${argv.name} was not found.`);
+					container = fcontainer;
+				}
+				// make a fake container to skip having to fetch it
+				container = new mod.Container(argv.id || cfw.config.selected, "placeholder", mod.Status.online, DuckCloud);
+				const conn = new mod.TCPConnection(container, argv.port);
+				conn.on('data', (data: Buffer) => {
+					process.stdout.write(data);
+				})
+				conn.on('close', () => {
+					process.exit(0);
+				})
+				process.stdin.setRawMode(true);
+				process.stdin.on('data', (data: Buffer) => {
+					conn.write(data);
+				})
 			})
-			.command('pro', 'pro control', yargs =>
-				yargs.command('apply <code>', 'Apply a pro code', yargs =>
-					yargs.positional('code', {
-						describe: 'Pro code to apply',
-						type: 'string'
-					}).demandOption(['code']),
-					async argv => {
-						// Apply pro token
-						const resp = await DuckCloud.User.ApplyForPro(argv.code)
-						if (resp === 302) {
-							return console.error('Server returned the wrong status code (302), maybe your token got invalidated?');
-						}
+		.command('pro', 'pro control', yargs =>
+			yargs.command('apply <code>', 'Apply a pro code', yargs =>
+				yargs.positional('code', {
+					describe: 'Pro code to apply',
+					type: 'string'
+				}).demandOption(['code']),
+				async argv => {
+					// Apply pro token
+					const resp = await DuckCloud.User.ApplyForPro(argv.code)
+					if (resp === 302) {
+						return console.error('Server returned the wrong status code (302), maybe your token got invalidated?');
 					}
-				).command('create [expiresAfterUsage]',
-				'Creates a PRO token, which also will be returned on the page. You must do that from the pro_coder account!',
+				}
+			).command('create [expiresAfterUsage]',
+			'Creates a PRO token, which also will be returned on the page. You must do that from the pro_coder account!',
 					yargs => yargs.positional('expiresAfterUsage', {
 						describe: 'Should token expire after usage? (set to true or false)',
 						type: 'boolean',
@@ -560,27 +602,26 @@ ${cfw.config.script.eof}\n`);
 							return console.error('Server returned the wrong status code (302), maybe your token got invalidated?');
 						}
 
-					}).command('remove <code>',
-					'Removes an usable PRO token from the pro_coder account, making it unavailable to other users. You must do that from the pro_coder account!',
-						yargs => yargs.positional('code', {
-							describe: 'The code to remove/invalidate',
-							type: 'string'
-						}).demandOption('code'), async argv => {
-							const body = new URLSearchParams();
-							body.append('code', argv.code);
-
-							const resp = await fetch(`${cfw.config.server}/removeprocode`, {
-								method: 'POST',
-								body,
-								headers: {
-									Cookie: `token=${cfw.config.token}`
-								},
-								redirect: 'manual'
-							})
-							if (resp.status === 302) {
-								return console.error('Server returned the wrong status code (302), maybe your token got invalidated?');
-							}
+				}).command('remove <code>',
+				'Removes an usable PRO token from the pro_coder account, making it unavailable to other users. You must do that from the pro_coder account!',
+					yargs => yargs.positional('code', {
+						describe: 'The code to remove/invalidate',
+						type: 'string'
+					}).demandOption('code'), async argv => {
+						const body = new URLSearchParams();
+						body.append('code', argv.code);
+						const resp = await fetch(`${cfw.config.server}/removeprocode`, {
+							method: 'POST',
+							body,
+							headers: {
+								Cookie: `token=${cfw.config.token}`
+							},
+							redirect: 'manual'
 						})
+						if (resp.status === 302) {
+							return console.error('Server returned the wrong status code (302), maybe your token got invalidated?');
+						}
+					})
 				.demandCommand())
 	.demandCommand()
 	.parse()

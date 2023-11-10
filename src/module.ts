@@ -78,6 +78,37 @@ export class User {
 	}
 	
 }
+export class TCPConnection extends EventEmitter {
+	public socket: import("socket.io-client").Socket;
+	constructor(public container: Container, public rport: number) {
+		super();
+		this.socket = io(container.duckcloud.server, {
+			transportOptions: {
+				polling: {
+					extraHeaders: {
+						Cookie: `token=${container.duckcloud.User.token}`
+					}
+				}
+			}
+		});
+		this.socket.on('connect', () => {
+			this.socket.emit('tcp_vmselect', container.id, rport);
+			this.emit('open');
+		})
+		this.socket.on('datad', data => {
+			this.emit('data', data); // data is a buffer
+		})
+		this.socket.on('disconnect', () => {
+			this.emit('close');
+		})
+	}
+	write(data: Buffer) {
+		this.socket.emit('datad', data);
+	}
+	close() {
+		this.socket.disconnect();
+	}
+}
 export class Shell extends EventEmitter {
 	public socket: import("socket.io-client").Socket;
 	constructor(public container: Container) {

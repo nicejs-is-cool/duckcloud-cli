@@ -542,28 +542,54 @@ ${cfw.config.script.eof}\n`);
 				type: 'boolean',
 				alias: 'c',
 				default: false
+			}).option('verbose', {
+				describe: 'Verbose mode, can be used for debugging',
+				type: 'boolean',
+				alias: 'v',
+				default: false
 			}).demandOption("port"), async argv => {
+				//console.error(process.argv);
 				if (!argv.port) throw new Error('where is the fucking port');
 				let container: mod.Container;
 				if (argv.name) {
+					let name = argv.name!;
+					if (name.endsWith('.duckcloud')) {
+						// i swear to god if a mf names their vm "amogus.duckcloud"
+						// i am pulling the knife
+						name = name.slice(0, -'.duckcloud'.length);
+					}
 					const containers = await DuckCloud.User.GetContainers();
 					const fcontainer = containers.find(value => argv.ignoreCase ?
-						value.name.toLowerCase() === argv.name?.toLowerCase?.() : 
-						value.name === argv.name);
+						value.name.toLowerCase() === name.toLowerCase() : 
+						value.name === name);
 					if (!fcontainer) throw new Error(`Container with name ${argv.name} was not found.`);
 					container = fcontainer;
+					//console.error(container);
+				} else {
+					// make a fake container to skip having to fetch it
+					container = new mod.Container(argv.id || cfw.config.selected, "placeholder", mod.Status.online, DuckCloud);
 				}
-				// make a fake container to skip having to fetch it
-				container = new mod.Container(argv.id || cfw.config.selected, "placeholder", mod.Status.online, DuckCloud);
+				
 				const conn = new mod.TCPConnection(container, argv.port);
-				conn.on('data', (data: Buffer) => {
+				conn.on('data', (data: Buffer | string) => {
+					if (argv.verbose) console.error('[duckcloud->local]', data);
+					if (typeof data === "string") console.error('duckcl:',data);
 					process.stdout.write(data);
 				})
 				conn.on('close', () => {
 					process.exit(0);
 				})
-				process.stdin.setRawMode(true);
+				let pktbuf: Buffer[] = [];
+				conn.on('open', () => {
+					for (const pkt of pktbuf) {
+						conn.write(pkt);
+					}
+					pktbuf = [];
+				})
+				if (process.stdin.isTTY) process.stdin.setRawMode(true);
 				process.stdin.on('data', (data: Buffer) => {
+					if (argv.verbose) console.error('[local->duckcloud]',data);
+					if (!conn.open) return pktbuf.push(data);
 					conn.write(data);
 				})
 			})

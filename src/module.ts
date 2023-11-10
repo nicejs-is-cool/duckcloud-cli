@@ -80,6 +80,7 @@ export class User {
 }
 export class TCPConnection extends EventEmitter {
 	public socket: import("socket.io-client").Socket;
+	public open: boolean = false;
 	constructor(public container: Container, public rport: number) {
 		super();
 		this.socket = io(container.duckcloud.server, {
@@ -93,6 +94,7 @@ export class TCPConnection extends EventEmitter {
 		});
 		this.socket.on('connect', () => {
 			this.socket.emit('tcp_vmselect', container.id, rport);
+			this.open = true;
 			this.emit('open');
 		})
 		this.socket.on('datad', data => {

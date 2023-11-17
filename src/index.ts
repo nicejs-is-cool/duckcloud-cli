@@ -366,7 +366,7 @@ ${cfw.config.script.eof}\n`);
 			});
 			const containers: Container[] = await resp.json();
 			for (const [_, container] of containers.entries()) {
-				console.log(`${container.vmname}\t${container.status}\t${_}`);
+				console.log(`${container.vmname}${container.vmname.length < 8 ? '\t\t' : '\t'}${container.status}\t${_}`);
 			}
 		})
 		.command('config [path]', 'Modify/view configuration', yargs =>

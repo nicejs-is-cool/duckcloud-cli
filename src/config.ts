@@ -39,7 +39,7 @@ export interface Config {
     },
     server: string
 }
-export const global_config_folder_path = path.join(os.homedir(), "./config")
+export const global_config_folder_path = path.join(os.homedir(), "./.config")
 export const config_folder_path = path.join(global_config_folder_path, "./duckcl");
 export const config_path = path.join(config_folder_path, "./config.json5");
 export const old_config_path = path.join(os.homedir(), "./.duckcl.json5");
@@ -98,7 +98,7 @@ export function hasOldConfig() {
 export async function migrateConfig() {
     // must be run AFTER createConfig();
     // also assumes the old config exists
-    const conf = JSON5.parse(await fs.readFile(old_config_path, "utf-8"));
+    const conf = await fs.readFile(old_config_path, "utf-8")
     await fs.writeFile(config_path, conf, { encoding: 'utf-8' });
 }
 

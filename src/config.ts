@@ -39,8 +39,10 @@ export interface Config {
     },
     server: string
 }
-
-export const config_path = path.join(os.homedir(), "./.duckcl.json5");
+export const global_config_folder_path = path.join(os.homedir(), "./config")
+export const config_folder_path = path.join(global_config_folder_path, "./duckcl");
+export const config_path = path.join(config_folder_path, "./config.json5");
+export const old_config_path = path.join(os.homedir(), "./.duckcl.json5");
 
 export const defaultConfig: Config = {
     token: "",
@@ -77,12 +79,44 @@ export const defaultConfig: Config = {
     },
     server: "https://duckcloud.pcprojects.tk"
 }
+async function fileExists(path: string) {
+    try {
+        await fs.access(path, fs.constants.R_OK | fs.constants.W_OK)
+        return true;
+    } catch(err) {
+        return false;
+    }
+}
+export async function createConfig() {
+    if (!await fileExists(global_config_folder_path)) await fs.mkdir(global_config_folder_path); // must be windows no way a linux user wouldn't have this folder
+    if (!await fileExists(config_folder_path)) await fs.mkdir(config_folder_path);
+    await fs.writeFile(config_path, JSON5.stringify(defaultConfig, null, 2), "utf-8");
+}
+export function hasOldConfig() {
+    return fileExists(old_config_path);
+}
+export async function migrateConfig() {
+    // must be run AFTER createConfig();
+    // also assumes the old config exists
+    const conf = JSON5.parse(await fs.readFile(old_config_path, "utf-8"));
+    await fs.writeFile(config_path, conf, { encoding: 'utf-8' });
+}
 
 try {
     await fs.access(config_path, fs.constants.R_OK | fs.constants.W_OK);
 } catch(err: any) {
-    console.warn('duckcl-config: fatal: unable to access config file (%s), creating new one in %s', err.toString(), config_path)
-    await fs.writeFile(config_path, JSON5.stringify(defaultConfig, null, 2), "utf-8");
+    console.warn('duckcl.config: warn: unable to access config file (%s), creating new one in %s', err.toString(), config_path)
+    //await fs.writeFile(config_path, JSON5.stringify(defaultConfig, null, 2), "utf-8");
+    await createConfig();
+    if (await hasOldConfig()) {
+        console.info('duckcl.config: info: found old configuration file, attempting migration...')
+        await migrateConfig();
+        console.info('duckcl.config: info: removing old configuration')
+        await fs.unlink(old_config_path).catch(err => {
+            console.error('duckcl.config: error: failed to remove old configuration:', err);
+        })
+    }
+    console.info('duckcl.config: info: migrated to new configuration structure');
 	process.exit(0)
 }
 

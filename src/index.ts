@@ -39,7 +39,7 @@ yargs(hideBin(process.argv))
 			type: 'string'
 		}).option('ultimate-logon', {
 			alias: ['u'],
-			describe: 'Use UltimateLogon as the authentication method',
+			describe: 'Use UltimateLogon as the authentication method (cannot be used for linking or creating new accounts, yet)',
 			type: 'boolean'
 		}).option('password', {
 			alias: ['p'],
@@ -56,9 +56,18 @@ yargs(hideBin(process.argv))
 			console.log('Please go on https://ultimatelogon.pcprojects.tk/deviceLogon and input %s', device.code);
 			const spinnies = new Spinnies();
 			spinnies.add('wait4auth', { text: 'Waiting for authentication'});
-			const user = await device.wait();
-			spinnies.succeed('wait4auth');
-			console.log(user);
+			spinnies.add('dcat', {text: 'Get DuckCloud assigned token'})
+			const data = await device.wait();
+			if (data.user.appdata.duckcloud_token) {
+				cfw.config.token = data.user.appdata.duckcloud_token;
+				
+				spinnies.succeed('wait4auth', { text: 'Got UL token!'});
+				
+				//console.log('Got token!');
+			} else {
+				spinnies.fail('wait4auth', { text: 'No token available, are you sure this account is linked?' });
+			}
+			
 			return process.exit(0);
 		}
 		if (!argv.username) return console.error('Please specify a username')

@@ -56,13 +56,26 @@ yargs(hideBin(process.argv))
 			console.log('Please go on https://ultimatelogon.pcprojects.tk/deviceLogon and input %s', device.code);
 			const spinnies = new Spinnies();
 			spinnies.add('wait4auth', { text: 'Waiting for authentication'});
-			spinnies.add('dcat', {text: 'Get DuckCloud assigned token'})
+			spinnies.add('dcl', {text: 'Login with DuckCloud'})
 			const data = await device.wait();
 			if (data.user.appdata.duckcloud_token) {
 				cfw.config.token = data.user.appdata.duckcloud_token;
 				
-				spinnies.succeed('wait4auth', { text: 'Got UL token!'});
-				
+				spinnies.succeed('wait4auth', { text: 'Authenticated with UL'});
+				try {
+					const token = await DuckCloud.GetTokenFromULDeviceID(device.token);
+					cfw.config.token = token;
+					spinnies.succeed('dcl');
+				} catch(err) {
+					if (err instanceof mod.ULBlockedError) {
+						spinnies.fail('dcl', { text: err.message });
+					} else if (err instanceof mod.NoTokenError) {
+						spinnies.fail('dcl', { text: err.message })
+					} else {
+						spinnies.fail('dcl', { text: 'General failure, see error below'});
+						throw err;
+					}
+				}
 				//console.log('Got token!');
 			} else {
 				spinnies.fail('wait4auth', { text: 'No token available, are you sure this account is linked?' });

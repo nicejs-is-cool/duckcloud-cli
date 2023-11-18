@@ -222,4 +222,25 @@ export class DuckCloud {
 	LoginWithToken(token: string) {
 		this.User = new User(token, this);
 	}
+	async GetTokenFromULDeviceID(deviceId: string): Promise<string> {
+		const req = await fetch(`${this.server}/ul_link?deviceID=${deviceId}`, { redirect: 'manual' });
+		const token = req.headers.get('set-cookie')?.split(';')[0].split('=')[1];
+		if (req.headers.get('Location')?.startsWith("https://ultimatelogon.pcprojects.tk/blocked_user")) {
+			throw new ULBlockedError('This user has been blocked from authenticating with UltimateLogon.');
+		}
+		if (!token) throw new NoTokenError('DuckCloud token is missing from Ultimatelogon login request');
+		return token;
+	}
+}
+export class NoTokenError extends Error {
+	constructor(msg: string) {
+		super(msg);
+		this.name = "NoTokenError";
+	}
+}
+export class ULBlockedError extends Error {
+	constructor(msg: string) {
+		super(msg);
+		this.name = "ULBlockedError";
+	}
 }

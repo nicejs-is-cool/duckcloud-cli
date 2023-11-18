@@ -406,6 +406,10 @@ ${cfw.config.script.eof}\n`);
 				describe: '(Attempt) to update your configuration to the latest one',
 				type: 'boolean',
 				alias: ['u']
+			}).option('migrate', {
+				describe: 'Migrate from pre-2.4.0 configuration to the new structure',
+				type: 'boolean',
+				alias: ['m']
 			})
 		, async argv => {
 			if (argv.reset) {
@@ -433,6 +437,14 @@ ${cfw.config.script.eof}\n`);
 				}
 				recursive(cfw.config, cfw.defaultConfig);
 				return console.log('updated configuration');
+			}
+			if (argv.migrate) {
+				if (!await cfw.hasOldConfig()) return console.error('cannot find old configuration');
+				await cfw.migrateConfig();
+				await fs.unlink(cfw.old_config_path).catch(err => {
+					console.error('failed to remove old configuration:', err);
+				})
+				console.log('successfully migrated your configuration');
 			}
 			if (!argv.path) {
 				console.log(cfw.cfgp);

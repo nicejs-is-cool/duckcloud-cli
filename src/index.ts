@@ -142,25 +142,27 @@ yargs(hideBin(process.argv))
 			process.stdin.setRawMode(cfw.config.sh.stdinRawMode);
 			process.stdin.on('data', d => {
 				//console.log(d[0], lastPressedCtrlC)
-				if (d[0] === 0x1d) {
-					if (commandMode) {
-						process.stdout.write("^]");
-						socket.emit('datad', d.toString(cfw.config.sh.datadEncoding));
-						commandMode = false;
-						return;
-					} else {
-						commandMode = true;
-						//return;
-					}
-				} else {
-					if (commandMode) {
-						switch (d[0]) {
-							case (".".charCodeAt(0)):
-								socket.disconnect();
-								break;
+				if (cfw.config.sh.ctrlOpenBracketCommandMode) {
+					if (d[0] === 0x1d) {
+						if (commandMode) {
+							process.stdout.write("^]");
+							socket.emit('datad', d.toString(cfw.config.sh.datadEncoding));
+							commandMode = false;
+							return;
+						} else {
+							commandMode = true;
+							//return;
 						}
-						commandMode = false;
-					}
+					} else {
+						if (commandMode) {
+							switch (d[0]) {
+								case (".".charCodeAt(0)):
+									socket.disconnect();
+									break;
+							}
+							commandMode = false;
+						}
+					}	
 				}
 				
 				socket.emit('datad', d.toString(cfw.config.sh.datadEncoding))

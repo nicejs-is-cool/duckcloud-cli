@@ -20,7 +20,9 @@ export interface Config {
         resizeTerminalOnConnection: boolean,
         listenForTerminalResize: boolean,
         datadEncoding: BufferEncoding,
-        stdinRawMode: boolean
+        stdinRawMode: boolean,
+        ctrlOpenBracketCommandMode: boolean,
+        ctrlDToDisconnect: boolean
     },
     ls: {
         useLegacyQuickParse: boolean,
@@ -56,7 +58,9 @@ export const defaultConfig: Config = {
         resizeTerminalOnConnection: true,
         listenForTerminalResize: true,
         datadEncoding: 'utf-8',
-        stdinRawMode: true
+        stdinRawMode: true,
+        ctrlOpenBracketCommandMode: true,
+        ctrlDToDisconnect: false
     },
     ls: {
         useLegacyQuickParse: false,

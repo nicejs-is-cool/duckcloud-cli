@@ -12,16 +12,23 @@ $ duckcl --help
 duckcl <command>
 
 Commands:
-  duckcl login [username]   Login with duckcloud
-  duckcl container <id>     Select a container
-  duckcl sh                 Open shell in selected container
-  duckcl powerctl <action>  power control
-  duckcl script <path>      Run script on selected container (*will run as if th
-                            e user typed it, shebang is not necessary)
-  duckcl rm                 Delete selected container (cannot be undone)
-  duckcl create             Create a new container
-  duckcl ls                 List all containers
-  duckcl config [path]      Modify/view configuration
+  duckcl login [username]                  Login with duckcloud
+  duckcl container <id>                    Select a container
+  duckcl sh                                Open shell in selected container
+  duckcl powerctl <action>                 power control
+  duckcl script <path>                     Run script on selected container (*wi
+                                           ll run as if the user typed it, sheba
+                                           ng is not necessary)
+  duckcl rm                                Delete selected container (cannot be
+                                           undone)
+  duckcl create                            Create a new container
+  duckcl ls                                List all containers
+  duckcl config [path]                     Modify/view configuration
+  duckcl forward <remotePort> <localpath>  Forwards a TCP port from a DuckCloud
+                                           container to your local machine
+  duckcl proxycmd <port>                   Proxy stdin/stdout to a TCP connectio
+                                           n (can be used for ssh)
+  duckcl pro                               pro control
 
 Options:
   --help     Show help                                                 [boolean]

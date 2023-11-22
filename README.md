@@ -31,7 +31,8 @@ Options:
 ### Where is the config
 At `~/.duckcl.json5`
 ### Ultimatelogon
-Ultimatelogon login is in beta and doesn't work right now, please don't try using it.
+Ultimatelogon login is in beta, however you can still login if your account is already linked/you created
+it from ultimatelogon. What won't work is trying to link your account or create a new one (i mean creating accounts in general is not implemented yet but anyway)
 ### How do I update my configuration?
 If you upgraded to a newer version of `duckcloud-cli` with new configuration entries,
 you'll need to run `duckcl config --reset` to reset your configuration back to

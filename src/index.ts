@@ -60,6 +60,7 @@ yargs(hideBin(process.argv))
 			await aquestion('Press enter when you have authenticated in ultimatelogon.');
 			
 			const token = await DuckCloud.GetTokenFromULDeviceID(device.token);
+			console.log(token);
 			cfw.config.token = token;
 			console.log('Successfully logged in.');
 			/*const spinnies = new Spinnies();

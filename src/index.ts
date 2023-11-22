@@ -39,7 +39,7 @@ yargs(hideBin(process.argv))
 			type: 'string'
 		}).option('ultimate-logon', {
 			alias: ['u'],
-			describe: 'Use UltimateLogon as the authentication method',
+			describe: 'Use UltimateLogon as the authentication method (cannot be used for linking or creating new accounts, yet)',
 			type: 'boolean'
 		}).option('password', {
 			alias: ['p'],
@@ -54,11 +54,42 @@ yargs(hideBin(process.argv))
 			//const deviceSession: PCd.Ultimatelogon.DeviceStartSession = await (await fetch("https://ultimatelogon.pcprojects.tk/deviceStartSess")).json();
 			const device = await ul.StartDeviceAuth();
 			console.log('Please go on https://ultimatelogon.pcprojects.tk/deviceLogon and input %s', device.code);
-			const spinnies = new Spinnies();
+			// turns out UL only lets you fetch the deviceId thingy once and then that id is wiped from existence
+			const rl = readline.createInterface(process.stdin, process.stdout);
+			const aquestion: (q: string) => Promise<string> = (q: string) => new Promise(resolve => rl.question(q, resolve));
+			await aquestion('Press enter when you have authenticated in ultimatelogon.');
+			
+			const token = await DuckCloud.GetTokenFromULDeviceID(device.token);
+			//console.log(token);
+			cfw.config.token = token;
+			console.log('Successfully logged in.');
+			/*const spinnies = new Spinnies();
 			spinnies.add('wait4auth', { text: 'Waiting for authentication'});
-			const user = await device.wait();
-			spinnies.succeed('wait4auth');
-			console.log(user);
+			spinnies.add('dcl', {text: 'Login with DuckCloud'})
+			const data = await device.wait();
+			if (data.user.appdata.duckcloud_token) {
+				cfw.config.token = data.user.appdata.duckcloud_token;
+				
+				spinnies.succeed('wait4auth', { text: 'Authenticated with UL'});
+				try {
+					const token = await DuckCloud.GetTokenFromULDeviceID(device.token);
+					cfw.config.token = token;
+					spinnies.succeed('dcl');
+				} catch(err) {
+					if (err instanceof mod.ULBlockedError) {
+						spinnies.fail('dcl', { text: err.message });
+					} else if (err instanceof mod.NoTokenError) {
+						spinnies.fail('dcl', { text: err.message })
+					} else {
+						spinnies.fail('dcl', { text: 'General failure, see error below'});
+						throw err;
+					}
+				}
+				//console.log('Got token!');
+			} else {
+				spinnies.fail('wait4auth', { text: 'No token available, are you sure this account is linked?' });
+			}*/
+			
 			return process.exit(0);
 		}
 		if (!argv.username) return console.error('Please specify a username')

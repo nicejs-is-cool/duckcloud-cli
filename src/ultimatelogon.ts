@@ -1,11 +1,11 @@
 export class DeviceAuth {
-	constructor(public code: string, private token: string) {}
+	constructor(public code: string, public token: string) {}
 	async check() {
 		const resp = await fetch('https://ultimatelogon.pcprojects.tk/deviceDetails?device=' + this.token);
 		const json: PCd.Ultimatelogon.DeviceDetails = await resp.json();
 		return json;
 	}
-	wait() {
+	wait(): Promise<PCd.Ultimatelogon.DeviceDetails> {
 		return new Promise((resolve, reject) => {
 			setInterval(() => {
 				this.check()

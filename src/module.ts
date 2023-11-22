@@ -228,7 +228,7 @@ export class DuckCloud {
 		if (req.headers.get('Location')?.startsWith("https://ultimatelogon.pcprojects.tk/blocked_user")) {
 			throw new ULBlockedError('This user has been blocked from authenticating with UltimateLogon.');
 		}
-		console.log(req.headers);
+		//console.log(req.headers);
 		//console.log(req.status, await req.text())
 		if (!token) throw new NoTokenError('DuckCloud token is missing from Ultimatelogon login request');
 		return token;

@@ -1,6 +1,6 @@
 {
   "name": "duckcloud-cli",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "DuckCloud command line interface and wrapper",
   "main": "dist/module.js",
   "scripts": {
